@@ -109,7 +109,7 @@ fun gcf(numbers: List<Long>): FactorResult<Long> {
     return result
 }
 
-data class FactorResult<T: Number>(val gcf: T, val commonFactors: List<T>, val factors: Map<T,List<T>>)
+class FactorResult<T: Number>(val gcf: T, val commonFactors: List<T>, val factors: Map<T,List<T>>)
 
 class NumberZeroException: Exception("Do not enter the number zero")
 class NegativeNumberException: Exception("Do not enter negative numbers")
