@@ -16,7 +16,7 @@ limitations under the License.
 
 
 
-import java.util.Collections
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
@@ -31,7 +31,7 @@ fun main(args: Array<String>) {
             break
         else{
             try{
-                val numbers = input.split(" ").map{ it.toLongOrNull() }.requireNoNulls().toList()
+                val numbers = input.split(" ").map{ it.toLongOrNull() }.requireNoNulls().toSortedSet()
                 val result = gcf(numbers)
                 println("GCF: ${result.gcf}")
                 println("Common Factors: ${result.commonFactors.joinToString(" ")}")
@@ -53,8 +53,7 @@ fun main(args: Array<String>) {
 }
 
 @Throws(NumberZeroException::class, NegativeNumberException::class)
-fun gcf(numbers: List<Long>): FactorResult<Long> {
-    val numbers = numbers.distinct().sorted()
+fun gcf(numbers: SortedSet<Long>): FactorResult<Long> {
     numbers.forEach {
         if(it == 0L) throw NumberZeroException()
         if(it < 0L) throw NegativeNumberException()
