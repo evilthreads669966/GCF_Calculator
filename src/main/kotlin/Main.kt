@@ -69,7 +69,7 @@ fun gcf(numbers: SortedSet<Long>): FactorResult<Long> {
 
     var pool = Executors.newFixedThreadPool(numbers.size) as ThreadPoolExecutor
 
-    val threads = mutableListOf<Future<*>>()
+    val tasks = mutableListOf<Future<*>>()
     numbers.forEach { num ->
        val task = pool.submit {
             for (i in 1..num) {
@@ -80,9 +80,9 @@ fun gcf(numbers: SortedSet<Long>): FactorResult<Long> {
                 }
             }
         }
-        threads.add(task)
+        tasks.add(task)
     }
-    threads.forEach { it.get() }
+    tasks.forEach { it.get() }
 
     if (numbers.size == 1) {
         factors[numbers.first()]!!
@@ -91,7 +91,7 @@ fun gcf(numbers: SortedSet<Long>): FactorResult<Long> {
 
     val commonFactors = Collections.synchronizedList(mutableListOf<Long>())
     numbers.drop(1)
-    threads.clear()
+    tasks.clear()
     if(pool.maximumPoolSize < factors[factors.keys.first()]!!.size)
         pool.maximumPoolSize = factors[factors.keys.first()]!!.size
     factors[factors.keys.first()]!!.forEach { factor ->
@@ -106,10 +106,10 @@ fun gcf(numbers: SortedSet<Long>): FactorResult<Long> {
                     commonFactors.add(factor)
                 }
         }
-        threads.add(task)
+        tasks.add(task)
     }
 
-    threads.forEach { it.get() }
+    tasks.forEach { it.get() }
     val result = FactorResult<Long>(commonFactors.max(), commonFactors, factors)
     return result
 }
