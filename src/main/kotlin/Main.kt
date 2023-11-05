@@ -16,9 +16,12 @@ limitations under the License.
 
 
 
-import java.util.*
+import java.util.SortedSet
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.concurrent.thread
+import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.ThreadPoolExecutor
 
 fun main(args: Array<String>) {
     println("Find the greatest common factor by entering a list of number seperated by a space")
@@ -60,24 +63,26 @@ fun gcf(numbers: SortedSet<Long>): FactorResult<Long> {
     }
 
     val factors = ConcurrentHashMap<Long, MutableList<Long>>()
-
     numbers.forEach { num ->
         factors[num] = mutableListOf()
     }
 
-    val threads = mutableListOf<Thread>()
+    var pool = Executors.newFixedThreadPool(numbers.size) as ThreadPoolExecutor
+
+    val threads = mutableListOf<Future<*>>()
     numbers.forEach { num ->
-        val thread = thread(start = true) {
+       val task = pool.submit {
             for (i in 1..num) {
                 if (num % i == 0L) {
-                    factors[num]!!.add(i)
+                    synchronized(factors){
+                        factors[num]!!.add(i)
+                    }
                 }
             }
         }
-        threads.add(thread)
+        threads.add(task)
     }
-
-    threads.forEach { it.join() }
+    threads.forEach { it.get() }
 
     if (numbers.size == 1) {
         factors[numbers.first()]!!
@@ -87,9 +92,10 @@ fun gcf(numbers: SortedSet<Long>): FactorResult<Long> {
     val commonFactors = Collections.synchronizedList(mutableListOf<Long>())
     numbers.drop(1)
     threads.clear()
-
+    if(pool.maximumPoolSize < factors[factors.keys.first()]!!.size)
+        pool.maximumPoolSize = factors[factors.keys.first()]!!.size
     factors[factors.keys.first()]!!.forEach { factor ->
-        val thread = thread(start = true) {
+        val task = pool.submit {
             var count = 0
             numbers.forEach { num ->
                 if (factors[num]!!.contains(factor))
@@ -100,10 +106,10 @@ fun gcf(numbers: SortedSet<Long>): FactorResult<Long> {
                     commonFactors.add(factor)
                 }
         }
-        threads.add(thread)
+        threads.add(task)
     }
 
-    threads.forEach{ it.join() }
+    threads.forEach { it.get() }
     val result = FactorResult<Long>(commonFactors.max(), commonFactors, factors)
     return result
 }
